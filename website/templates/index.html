@@ -244,6 +244,11 @@
                         </button>
                         <div class="col"></div>
                     </div>
+                    <div class="row hide" id="result">
+                        <div class="col">지연시간</div>
+                        <div class="col" id="latency">0</div>
+                        <div class="col">초</div>
+                    </div>
                 </div>
                 <div class="col"></div>
             </div>
@@ -297,49 +302,72 @@
         }
     </script>
     <script>
-        $( document ).ready( function() {
-          $( 'button.btn-main').click( function() {
-            $( 'button.btn-main').fadeOut(100, function() {
-                $( 'h1.watch').fadeIn(1000);
-                $( '#moment').fadeIn(1000);
-                $( '#setting').fadeOut(100);
+        function getServerDate() {
+            var date;
+            $.ajax({
+                type: 'GET',
+                async: false,
+                url: '/api/common/server_date',
+                success: function(data) {
+                    date = data;
+                }
             });
-          } );
+            return date;
+        }
+
+        function getClientLocalTime() {
+            var now = new Date().getTime();
+            return now
+        }
+
+        function startTimer(duration, display) {
+            var timer = duration, minutes, seconds;
+            var interval = setInterval(function () {
+                minutes = parseInt(timer / 60, 10)
+                seconds = parseInt(timer % 60, 10);
+            
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+            
+                display.textContent  = minutes + ":" + seconds;
+            
+                if (--timer < 0) {
+                    timer = duration;
+                }
+
+                $('#moment').click( function() {
+                    clearInterval(interval);
+                    showResult()
+                });
+
+                // END Time
+                if(timer === 0) {
+                    clearInterval(interval);
+                    showResult()
+                }
+            }, 10);
+        }
+
+        function showResult() {
+            $( '#MyTimer').fadeOut(500);
+            $( '#moment').fadeOut(500);
+            setTimeout(3000);
+            $( '#setting').fadeIn(1500);
+            $( '#result').fadeIn(1500);
+
+            document.querySelector('#latency').textContent = (getServerDate()*1-getClientLocalTime()*1)/1000;
+        }
+
+
+        $('button.btn-main').click( function() {
+            $('button.btn-main').fadeOut(100, function() {
+                $('#MyTimer').fadeIn(1000);
+                $('#moment').fadeIn(1000);
+                $('#setting').fadeOut(100);
+            });
+            var fiveMinutes = 600;
+            display = document.querySelector('#MyTimer');
+            startTimer(fiveMinutes, display);
         } );
       </script>
-
-      <script type="text/javascript">
-        function startTimer(duration, display) {
-          var timer = duration, minutes, seconds;
-          var interval = setInterval(function () {
-            minutes = parseInt(timer / 60, 10)
-            seconds = parseInt(timer % 60, 10);
-        
-            minutes = minutes < 10 ? "0" + minutes : minutes;
-            seconds = seconds < 10 ? "0" + seconds : seconds;
-        
-            display.textContent  = minutes + ":" + seconds;
-        
-            if (--timer < 0) {
-              timer = duration;
-            }
-            if(timer === 0) {
-              clearInterval(interval);
-              display.textContent  = "세션 만료!";
-            }
-          }, 1000);
-        }
-        
-        window.onload = function () {
-          /* 기본값 10(분)입니다. */
-          var minutes = 10;
-        
-          var fiveMinutes = (60 * minutes) - 1,
-            display = document.querySelector('#MyTimer');
-          startTimer(fiveMinutes, display);
-        };
-        
-        /* 출처: https://stackoverflow.com/questions/9755706/javascript-countdown-timer-for-session-timeout/54370803 */
-        </script>
-
 </html>
